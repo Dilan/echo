@@ -1,0 +1,11 @@
+body{
+    background: #a6b779;
+    font-family: Tahoma;
+}
+.container {
+    height: 400px;
+}
+
+.node {
+    border: 1px solid #efefef;
+}
