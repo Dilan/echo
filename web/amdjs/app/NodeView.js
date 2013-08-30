@@ -38,8 +38,24 @@ define(
             },
 
             events: {
-                "click .remove": function () {
-                    this.trigger("removalRequested", this);
+                "click .stop": function () {
+                    this.model.off('PING');
+                    this.model.off('ALIVE?');
+
+                    this.model.on('PING', this.model.offPing, this.model);
+                    this.model.on('ALIVE?', this.model.aliveLost, this.model);
+
+                    console.log("PING switched OFF ["+ this.model.get("id") +"]");
+
+                },
+                "click .recover": function () {
+                    this.model.off('PING');
+                    this.model.off('ALIVE?');
+
+                    this.model.on('PING', this.model.onPing, this.model);
+                    this.model.on('ALIVE?', this.model.onAlive, this.model);
+
+                    console.log("PING switched ON ["+ this.model.get("id") +"]");
                 }
             }
         });

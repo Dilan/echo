@@ -2,16 +2,16 @@ define(
     [
         "jquery",
         "backbone",
-        "app/ClanView",
-        "app/Clan"
+        "app/ClusterView",
+        "app/Cluster"
     ],
 
-    function ($, backbone, ClanView, Clan) {
+    function ($, backbone, ClusterView, Cluster) {
         "use strict";
 
         return backbone.Router.extend({
             initialize: function (options) {
-                this.Clan = new Clan();
+                this.Cluster = new Cluster();
             },
 
             routes: {
@@ -19,8 +19,8 @@ define(
             },
 
             index: function () {
-                var view = new ClanView({
-                        model: this.Clan,
+                var view = new ClusterView({
+                        model: this.Cluster,
                         navigator: this
                     }),
                     el = $("#root-container");

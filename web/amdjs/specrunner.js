@@ -20,8 +20,10 @@ require(["underscore"], function (_) {
     require(
         [
             "spec/app/Router.spec",
-            "spec/app/Clan.spec",
-            "spec/app/ClanView.spec"
+            "spec/app/Node.spec",
+            "spec/app/NodeView.spec",
+            "spec/app/Cluster.spec",
+            "spec/app/ClusterView.spec"
         ],
 
         function () {

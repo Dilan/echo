@@ -3,7 +3,7 @@ define(
         "underscore",
         "backbone",
         "mustache",
-        "text!app/clan.mustache",
+        "text!app/cluster.mustache",
         "app/NodeView"
     ],
 
@@ -11,7 +11,7 @@ define(
         _,
         backbone,
         mustache,
-        tmplClan,
+        tmplCluster,
         NodeView)
     {
         "use strict";
@@ -23,7 +23,7 @@ define(
             },
 
             render: function () {
-                this.$el.html(mustache.to_html(tmplClan, this.model.toJSON()));
+                this.$el.html(mustache.to_html(tmplCluster, this.model.toJSON()));
                 this.populate();
                 return this;
             },
@@ -35,16 +35,14 @@ define(
             },
 
             populate: function() {
-                if (this.model.get("nodes") != undefined && this.model.get("nodes").length > 0) {
-                    _.each(this.model.get("nodes"), function (node) {
-                        if(this.nodeIdToViewMap[node.get('id')] == undefined) {
-                            var view = new NodeView({model: node});
+                _.each(this.model.get("nodes").models, function (node) {
+                    if(this.nodeIdToViewMap[node.get('id')] == undefined) {
+                        var view = new NodeView({model: node});
 
-                            this.nodeIdToViewMap[node.get('id')] = view;
-                            this.$el.find(".nodes").append(view.render().el);
-                        }
-                    }, this);
-                }
+                        this.nodeIdToViewMap[node.get('id')] = view;
+                        this.$el.find(".nodes").append(view.render().el);
+                    }
+                }, this);
             }
         });
     }
