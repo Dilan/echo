@@ -2,10 +2,10 @@ define(["underscore", "async", "backbone", "q"],
     function (_, async, backbone, Q) {
         "use strict";
 
-        var now = function() {
+        var now = function () {
                 return new Date();
             },
-            getRandomInt = function(min, max) {
+            getRandomInt = function (min, max) {
                 return Math.floor(Math.random() * (max - min + 1)) + min;
             };
 
@@ -33,9 +33,6 @@ define(["underscore", "async", "backbone", "q"],
                 this.on('IMTHEKING', this.registerTheKing, this);
                 this.on('PING', this.onPing, this);
 
-                this.on('start', this.startRequested, this);
-                this.on('stop', this.stopRequested, this);
-
                 _.defer(this.findTheKingOnInit, this);
             },
 
@@ -48,12 +45,12 @@ define(["underscore", "async", "backbone", "q"],
 
                 var promises = _.map(
                     nodeCollection.models,
-                    function(node) {
-                        return function() {
+                    function (node) {
+                        return function () {
                             var deferred = Q.defer();
 
                             that.network.send('ALIVE?', that, node)
-                                .then(function(response) {
+                                .then(function (response) {
                                     deferred.resolve(response);
                                 }, function (error) {
                                     deferred.reject(new Error(error));
@@ -65,9 +62,8 @@ define(["underscore", "async", "backbone", "q"],
                     []
                 );
 
-                Q.allSettled(promises).then(function(results) {
-
-                        var allMessages = [];
+                Q.allSettled(promises).then(function (results) {
+                    var allMessages = [];
                     results.forEach(function (result) {
                         if (result.state === "fulfilled") {
                             var value = result.value;
@@ -84,38 +80,37 @@ define(["underscore", "async", "backbone", "q"],
             },
 
             registerTheKing: function (king) {
-                if(this.get('status') == 'running') {
+                if (this.get('status') == 'running') {
                     this.set('king', king);
                 }
             },
 
             onPing: function (callback) {
-                if(this.get('status') == 'running') {
-                        if(getRandomInt(0, 1)) {
-                            callback(null, now());
-                        } else {
-                            callback(true);
-                        }
-                } else {
+                if (this.get('status') == 'running') {
+                    if (getRandomInt(0, 1)) {
+                        callback(null, now());
+                    } else {
                         callback(true);
+                    }
+                } else {
+                    callback(true);
                 }
             },
 
             replyFineThanks: function (callback, node) {
-                if(this.get('status') == 'running') {
-                        callback(null, 'FINETHANKS');
+                if (this.get('status') == 'running') {
+                    callback(null, 'FINETHANKS');
 
-
-                        var that = this;
-                        setTimeout(function() {
-                            if (that == that.get("king")) {
-                                node.trigger('IMTHEKING', that);
-                            } else  if (null == that.get("king")) {
-                                that.findTheKing(that.superiorNodes());
-                            }
-                        }, 500);
+                    var that = this;
+                    setTimeout(function () {
+                        if (that == that.get("king")) {
+                            node.trigger('IMTHEKING', that);
+                        } else if (null == that.get("king")) {
+                            that.findTheKing(that.superiorNodes());
+                        }
+                    }, 500);
                 } else {
-                        callback(true);
+                    callback(true);
                 }
             },
 
@@ -147,7 +142,7 @@ define(["underscore", "async", "backbone", "q"],
                 }
             },
 
-            proclaimTheKing: function(king, nodeCollection) {
+            proclaimTheKing: function (king, nodeCollection) {
                 _.each(
                     nodeCollection.models,
                     function (node) {
@@ -175,14 +170,14 @@ define(["underscore", "async", "backbone", "q"],
                 var that = this;
 
                 this.network.send('PING', this, king)
-                    .then(function(response) {
+                    .then(function (response) {
                         that.pingMonitoring.saveSuccessTime(now());
                     }, function (error) {
                         that.pingMonitoring.saveFailTime(now());
                     });
             },
 
-            theKingIsLost: function() {
+            theKingIsLost: function () {
                 this.set("king", null);
             },
 
@@ -194,32 +189,32 @@ define(["underscore", "async", "backbone", "q"],
                 return this.cluster.superiorNodes(this);
             },
 
-            startPingCycle: function(cycleUniqueId, cycleTimeInMilliseconds) {
+            startPingCycle: function (cycleUniqueId, cycleTimeInMilliseconds) {
                 this.pingMonitoring.startMonitoring(4 * cycleTimeInMilliseconds);
                 this.pingMonitoring.set("cycleUniqueId", cycleUniqueId);
             },
 
-            stopPreviousPingCycle: function() {
+            stopPreviousPingCycle: function () {
                 this.stopPingCycle(
                     this.pingMonitoring.previous("cycleUniqueId")
                 );
             },
 
-            stopCurrentPingCycle: function() {
+            stopCurrentPingCycle: function () {
                 this.stopPingCycle(
                     this.pingMonitoring.get("cycleUniqueId")
                 );
             },
 
-            stopPingCycle: function(cycleUniqueId) {
-                if(null != cycleUniqueId) {
+            stopPingCycle: function (cycleUniqueId) {
+                if (null != cycleUniqueId) {
                     this.pingMonitoring.stopMonitoring();
                     clearInterval(cycleUniqueId);
                 }
             },
 
-            onStatusChanged: function() {
-                if(this.isStopped()) {
+            onStatusChanged: function () {
+                if (this.isStopped()) {
 
                     this.set('king', null);
                 } else {
@@ -228,11 +223,11 @@ define(["underscore", "async", "backbone", "q"],
                 }
             },
 
-            stopRequested: function() {
+            stopRequested: function () {
                 this.set('status', 'stopped');
             },
 
-            startRequested: function() {
+            startRequested: function () {
                 this.set('status', 'running');
             }
         });

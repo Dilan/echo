@@ -72,10 +72,10 @@ define(
 
             events: {
                 "click .stop": function () {
-                    this.model.trigger('stop');
+                    this.model.stopRequested();
                 },
                 "click .recover": function () {
-                    this.model.trigger('start');
+                    this.model.startRequested();
                 }
             }
         });
