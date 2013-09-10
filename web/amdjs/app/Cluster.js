@@ -1,6 +1,6 @@
 define(
-    ["underscore", "backbone", "app/Node", "app/NodeCollection", "app/Network"],
-    function (_, backbone, Node, NodeCollection, Network) {
+    ["underscore", "backbone", "app/Node", "app/NodeCollection", "app/Network", "app/PingMonitoring"],
+    function (_, backbone, Node, NodeCollection, Network, PingMonitoring) {
     "use strict";
 
     var lastNodeId = 0;
@@ -26,26 +26,14 @@ define(
                 },
                 {
                     cluster: this,
-                    network: new Network({window:window}),
-                    window:window
+                    network: new Network(),
+                    pingMonitoring: new PingMonitoring({timeOutInMilliseconds:4000})
                 }
             );
         },
 
         onAddNode: function(node) {
-            var that = this;
-
-            // listeners
-            node.on('change:king', function() { that.set("king", node.get("king")); }, this);
-/*
-            if(this.get("nodes").length == 1) {
-                node.proclaimedToBeTheKing();
-            } else {
-                node.set("king", this.get("king"));
-            }
-*/
             this.trigger("addNode", this);
-
         },
 
         nodes: function(excludeNode) {

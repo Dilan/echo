@@ -1,207 +1,239 @@
-define(["underscore", "async", "backbone"],
-    function (_, async, backbone) {
-    "use strict";
+define(["underscore", "async", "backbone", "q"],
+    function (_, async, backbone, Q) {
+        "use strict";
 
-    return backbone.Model.extend({
-        defaults: {
-            id: null,
-            king: null
-        },
+        var now = function() {
+                return new Date();
+            },
+            getRandomInt = function(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            };
 
-        initialize : function(attributes, options) {
-            this.network = options.network;
-            this.window = options.window;
-            this.cluster = options.cluster;
+        return backbone.Model.extend({
+            defaults: {
+                id: null,
+                king: null,
+                status: 'running'
+            },
 
-            // listeners
-            this.on('change:king', this.onKingChanged, this);
+            initialize: function (attributes, options) {
+                Q.stopUnhandledRejectionTracking();
 
-            this.on('PING', this.onPing, this);
-            this.on('IMTHEKING', this.registerKing, this);
-            this.on('ALIVE?', this.onAlive, this);
+                this.network = options.network;
+                this.cluster = options.cluster;
+                this.pingMonitoring = options.pingMonitoring;
 
-            _.defer(this.findTheKingOnInit, this);
-        },
+                this.on('change:king', this.onKingChanged, this);
+                this.on('change:status', this.onStatusChanged, this);
 
-        findTheKingOnInit: function(that) {
-            that.findTheKing(that.allNodes());
-        },
+                this.pingMonitoring.on('change:cycleUniqueId', this.stopPreviousPingCycle, this);
+                this.pingMonitoring.on('lost', this.theKingIsLost, this);
 
-        onPing: function(callback) {
-            console.log("Ping received in NODE [" + this.get("id") + "]");
-            callback(null, new Date());
-        },
+                this.on('ALIVE?', this.replyFineThanks, this);
+                this.on('IMTHEKING', this.registerTheKing, this);
+                this.on('PING', this.onPing, this);
 
-        onAlive: function(callback, node) {
-            console.log("onAlive in NODE [" + this.get("id") + "] from Node [" + node.get("id") + "]");
-            callback(null, 'FINETHANKS');
+                this.on('start', this.startRequested, this);
+                this.on('stop', this.stopRequested, this);
 
-            if(this == this.get("king")) {
-                node.trigger('IMTHEKING', this);
-            } else {
-                if(null == this.get("king")) {
-                    this.findTheKing(this.superiorNodes());
-                }
-            }
-        },
+                _.defer(this.findTheKingOnInit, this);
+            },
 
-        offPing: function(callback) {
-            console.log("Ping OFF in NODE [" + this.get("id") + "]");
-            callback(true);
-        },
+            findTheKingOnInit: function (that) {
+                that.findTheKing(that.allNodes());
+            },
 
-        aliveLost: function(callback, node) {
-            console.log("alive LOST in NODE [" + this.get("id") + "] from Node [" + node.get("id") + "]");
-            callback(true);
-        },
+            findTheKing: function (nodeCollection) {
+                var that = this;
 
-        findTheKing: function(nodes) {
-            var that = this;
-
-            async.map(nodes.models,
-                function(node, callback){
-
-                    node.trigger('ALIVE?',
-                        function(err, response) {
-                            var date = new Date();
-                            console.log('RESPONSE ('+response+') at [' + date.toString('h:mm:ss')  + '] - from Node [' +
-                                    node.get('id') + '] at Node [' + that.get('id') +']');
-                            callback(null, response);
-
-                        },
-                        that
-                    );
-                },
-                function(error, results) {
-                    console.log('result length is [' +  results.length + '] in NODE [' + that.get("id") +']')
-
-                    if(-1 == _.indexOf(results, 'FINETHANKS')) {
-                        console.log('no any fine-thanks was received in NODE [' + that.get("id") + ']');
-                        that.proclaimedToBeTheKing();
-                    } else {
-                        console.log('at least ONE fine-thanks was received in NODE [' + that.get("id") + '], wait who is the KING');
-                    }
-                }
-            );
-        },
-
-        isKing: function() {
-            return this == this.get("king");
-        },
-
-        onKingChanged: function() {
-            if(null == this.get("king")) {
-                this.findTheKing(this.superiorNodes());
-            }
-            else if(this != this.get("king")) {
-
-                console.log("onKingChanged : in Node [" +
-                    this.get("id") + "] king now is [" + this.get("king").get("id") +"]");
-
-                this.window.clearInterval(this.pingIntervalId);
-                this.startPingTheKingPeriodically();
-            }
-            else if(this == this.get("king")) {
-                this.window.clearInterval(this.pingIntervalId);
-                var that= this;
-
-                _.each(
-                    this.allNodes().models,
+                var promises = _.map(
+                    nodeCollection.models,
                     function(node) {
-                        that.window.setTimeout(
-                            function() {
-                                node.trigger('IMTHEKING', that);
-                            },
-                            0
-                        );
-                    }
+                        return function() {
+                            var deferred = Q.defer();
+
+                            that.network.send('ALIVE?', that, node)
+                                .then(function(response) {
+                                    deferred.resolve(response);
+                                }, function (error) {
+                                    deferred.reject(new Error(error));
+                                });
+
+                            return deferred.promise;
+                        }()
+                    },
+                    []
                 );
 
-            }
-        },
+                Q.allSettled(promises).then(function(results) {
 
-        startPingTheKingPeriodically: function() {
-
-            console.log("startPingTheKingPeriodically : in Node [" +
-                this.get("id") + "]");
-
-            var that = this;
-            this.pingIntervalId = this.window.setInterval(
-                function() { that.pingTheKing(); },
-                5000
-            );
-        },
-
-        pingTheKing: function() {
-            var that = this,
-                sendTime = new Date();
-
-            this.window.setTimeout(function() {
-                if(that.get('king') == null) {
-                    console.log("Node [" + that.get("id") + "] has no king ... and cant ping");
-                } else {
-
-                    that.network.send(
-                        'PING',
-                        that,
-                        that.get('king'),
-                        function(err, receiveTime) {
-                            if(err) return that.pingLost(sendTime);
-                            return that.pingReceived(sendTime);
+                        var allMessages = [];
+                    results.forEach(function (result) {
+                        if (result.state === "fulfilled") {
+                            var value = result.value;
+                            allMessages.push(value);
+                        } else {
+                            var reason = result.reason;
                         }
-                    );
+                    });
 
+                    if (-1 == _.indexOf(allMessages, 'FINETHANKS')) {
+                        that.registerTheKing(that);
+                    }
+                });
+            },
+
+            registerTheKing: function (king) {
+                if(this.get('status') == 'running') {
+                    this.set('king', king);
                 }
-            }, 0);
-        },
+            },
 
-        getRandomInt: function () {
-            var min = 1,
-                max = 5;
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        },
+            onPing: function (callback) {
+                if(this.get('status') == 'running') {
+                        if(getRandomInt(0, 1)) {
+                            callback(null, now());
+                        } else {
+                            callback(true);
+                        }
+                } else {
+                        callback(true);
+                }
+            },
 
-        pingReceived: function(sendTime) {
-            //console.log("pingReceived");
-            this.lastReceivedPingTime = sendTime;
+            replyFineThanks: function (callback, node) {
+                if(this.get('status') == 'running') {
+                        callback(null, 'FINETHANKS');
 
-        },
 
-        pingLost: function(sendTime) {
-            if(sendTime < this.lastReceivedPingTime) {
-                console.log("Warning : pingLost but looks ok ");
-            } else {
-                console.log("Error : pingLost and we have to start looking for new king ....");
-                this.set("king", null);
-            }
+                        var that = this;
+                        setTimeout(function() {
+                            if (that == that.get("king")) {
+                                node.trigger('IMTHEKING', that);
+                            } else  if (null == that.get("king")) {
+                                that.findTheKing(that.superiorNodes());
+                            }
+                        }, 500);
+                } else {
+                        callback(true);
+                }
+            },
 
-        },
+            isKing: function () {
+                return this == this.get("king");
+            },
 
-        allNodes: function() {
-            return this.cluster.nodes(this);
-        },
+            isStopped: function () {
+                return 'stopped' == this.get("status");
+            },
 
-        superiorNodes: function() {
-            return this.cluster.superiorNodes(this);
-        },
+            isNotStopped: function () {
+                return !this.isStopped();
+            },
 
-        proclaimedToBeTheKing: function() {
-            this.registerKing(this);
-        },
+            onKingChanged: function () {
+                if (null == this.get("king") && this.isNotStopped()) {
+                    this.findTheKing(this.superiorNodes());
+                }
+                else if (null == this.get("king") && this.isStopped()) {
+                    this.stopCurrentPingCycle();
+                }
+                else if (this != this.get("king") && this.isNotStopped()) {
+                    this.startPingTheKingPeriodically(this.get("king"));
+                }
+                else if (this == this.get("king")) {
+                    this.stopCurrentPingCycle();
+                    this.proclaimTheKing(this.get("king"), this.allNodes());
+                }
+            },
 
-        registerKing: function(king) {
-            this.set('king', king);
-
-            if(this == king) {
-                var that = this;
+            proclaimTheKing: function(king, nodeCollection) {
                 _.each(
-                    this.allNodes().models,
-                    function(node) {
-                        console.log('Node [' + that.get("id") + '] become KING AND inform other NODE [' + node.get("id") + ']')
+                    nodeCollection.models,
+                    function (node) {
                         node.trigger('IMTHEKING', king);
                     }
                 );
+            },
+
+            startPingTheKingPeriodically: function (king) {
+                var that = this,
+                    cycleTimeInMilliseconds = 1000;
+
+                this.startPingCycle(
+                    setInterval(
+                        function () {
+                            that.ping(king);
+                        },
+                        cycleTimeInMilliseconds // period
+                    ),
+                    cycleTimeInMilliseconds
+                );
+            },
+
+            ping: function (king) {
+                var that = this;
+
+                this.network.send('PING', this, king)
+                    .then(function(response) {
+                        that.pingMonitoring.saveSuccessTime(now());
+                    }, function (error) {
+                        that.pingMonitoring.saveFailTime(now());
+                    });
+            },
+
+            theKingIsLost: function() {
+                this.set("king", null);
+            },
+
+            allNodes: function () {
+                return this.cluster.nodes(this);
+            },
+
+            superiorNodes: function () {
+                return this.cluster.superiorNodes(this);
+            },
+
+            startPingCycle: function(cycleUniqueId, cycleTimeInMilliseconds) {
+                this.pingMonitoring.startMonitoring(4 * cycleTimeInMilliseconds);
+                this.pingMonitoring.set("cycleUniqueId", cycleUniqueId);
+            },
+
+            stopPreviousPingCycle: function() {
+                this.stopPingCycle(
+                    this.pingMonitoring.previous("cycleUniqueId")
+                );
+            },
+
+            stopCurrentPingCycle: function() {
+                this.stopPingCycle(
+                    this.pingMonitoring.get("cycleUniqueId")
+                );
+            },
+
+            stopPingCycle: function(cycleUniqueId) {
+                if(null != cycleUniqueId) {
+                    this.pingMonitoring.stopMonitoring();
+                    clearInterval(cycleUniqueId);
+                }
+            },
+
+            onStatusChanged: function() {
+                if(this.isStopped()) {
+
+                    this.set('king', null);
+                } else {
+                    this.findTheKing(this.allNodes());
+                    // this.startPingTheKingPeriodically(this.get("king"));
+                }
+            },
+
+            stopRequested: function() {
+                this.set('status', 'stopped');
+            },
+
+            startRequested: function() {
+                this.set('status', 'running');
             }
-        }
+        });
     });
-});
