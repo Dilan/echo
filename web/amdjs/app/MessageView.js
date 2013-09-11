@@ -6,12 +6,7 @@ define(
         "text!app/message.mustache"
     ],
 
-    function (
-        _,
-        backbone,
-        mustache,
-        tmplMessage)
-    {
+    function (_, backbone, mustache, tmplMessage) {
         "use strict";
 
         return backbone.View.extend({

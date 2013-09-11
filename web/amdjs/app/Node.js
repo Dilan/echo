@@ -33,7 +33,7 @@ define(["underscore", "async", "backbone", "q"],
                 this.on('IMTHEKING', this.registerTheKing, this);
                 this.on('PING', this.onPing, this);
 
-                _.defer(this.findTheKingOnInit, this);
+                options._.defer(this.findTheKingOnInit, this);
             },
 
             findTheKingOnInit: function (that) {
@@ -47,16 +47,9 @@ define(["underscore", "async", "backbone", "q"],
                     nodeCollection.models,
                     function (node) {
                         return function () {
-                            var deferred = Q.defer();
-
-                            that.network.send('ALIVE?', that, node)
-                                .then(function (response) {
-                                    deferred.resolve(response);
-                                }, function (error) {
-                                    deferred.reject(new Error(error));
-                                });
-
-                            return deferred.promise;
+                            return Q.fcall(
+                                function () { return that.network.send('ALIVE?', that, node); }
+                            );
                         }()
                     },
                     []
@@ -87,13 +80,9 @@ define(["underscore", "async", "backbone", "q"],
 
             onPing: function (callback) {
                 if (this.get('status') == 'running') {
-                    if (getRandomInt(0, 1)) {
-                        callback(null, now());
-                    } else {
-                        callback(true);
-                    }
+                    callback(null, now());
                 } else {
-                    callback(true);
+                    callback('stopped');
                 }
             },
 
@@ -110,7 +99,7 @@ define(["underscore", "async", "backbone", "q"],
                         }
                     }, 500);
                 } else {
-                    callback(true);
+                    callback('stopped');
                 }
             },
 

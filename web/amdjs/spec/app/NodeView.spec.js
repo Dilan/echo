@@ -12,13 +12,15 @@ define(["backbone", "app/NodeView"], function (backbone, NodeView) {
         });
 
         describe("rendered app/NodeView", function () {
-            var model = new backbone.Model({foo: "bar"});
-            model.isKing = function() { return true; };
+            var model = new backbone.Model(),
+                view = new NodeView({model: model});
 
-            var view = new NodeView({model: model});
+            it("displays button to stop", function () {
+                expect(view.render().$("a[class='stop']").size()).toBe(1);
+            });
 
-            it("displays [node] element", function () {
-                expect(view.render().$("div[class='node']").size()).toBe(1);
+            it("displays button to recover", function () {
+                expect(view.render().$("a[class='recover']").size()).toBe(1);
             });
         });
     };

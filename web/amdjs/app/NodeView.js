@@ -7,13 +7,7 @@ define(
         "app/MessageView"
     ],
 
-    function (
-        _,
-        backbone,
-        mustache,
-        tmplNode,
-        MessageView)
-    {
+    function (_, backbone, mustache, tmplNode, MessageView) {
         "use strict";
 
         return backbone.View.extend({
@@ -37,7 +31,7 @@ define(
             },
 
             onKingChanged: function () {
-                if(this.model.isKing()) {
+                if (this.model.isKing()) {
                     this.$el.addClass('king');
                 } else {
                     this.$el.removeClass('king');
@@ -45,7 +39,7 @@ define(
             },
 
             onStatusChanged: function () {
-                if(this.model.isStopped()) {
+                if (this.model.isStopped()) {
                     this.$el.addClass("stopped");
                 } else {
                     this.$el.removeClass("stopped");
@@ -64,8 +58,8 @@ define(
                 this.displayIncomeMessage("IMTHEKING")
             },
 
-            displayIncomeMessage: function(message) {
-                var view = new MessageView({ text:message });
+            displayIncomeMessage: function (message) {
+                var view = new MessageView({ text: message });
                 this.$(".income-messages").append(view.render().el);
                 view.$el.fadeOut(2000);
             },

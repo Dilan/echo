@@ -7,13 +7,7 @@ define(
         "app/NodeView"
     ],
 
-    function (
-        _,
-        backbone,
-        mustache,
-        tmplCluster,
-        NodeView)
-    {
+    function (_, backbone, mustache, tmplCluster, NodeView) {
         "use strict";
 
         return backbone.View.extend({
@@ -34,9 +28,9 @@ define(
                 }
             },
 
-            populate: function() {
+            populate: function () {
                 _.each(this.model.get("nodes").models, function (node) {
-                    if(this.nodeIdToViewMap[node.get('id')] == undefined) {
+                    if (this.nodeIdToViewMap[node.get('id')] == undefined) {
                         var view = new NodeView({model: node});
 
                         this.nodeIdToViewMap[node.get('id')] = view;
