@@ -8,7 +8,7 @@
 
 .income-messages { height: 80px; margin: 0 0 15px; overflow: auto;}
 
-.node .income-messages {}
+.node .income-messages { overflow-y:hidden; }
 .node .node-buttons {}
 
 @media (min-width: 1200px) {

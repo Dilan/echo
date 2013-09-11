@@ -179,8 +179,8 @@ define(["underscore", "async", "backbone", "q"],
             },
 
             startPingCycle: function (cycleUniqueId, cycleTimeInMilliseconds) {
-                this.pingMonitoring.startMonitoring(4 * cycleTimeInMilliseconds);
                 this.pingMonitoring.set("cycleUniqueId", cycleUniqueId);
+                this.pingMonitoring.startMonitoring(4 * cycleTimeInMilliseconds);
             },
 
             stopPreviousPingCycle: function () {
