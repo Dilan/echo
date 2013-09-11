@@ -180,7 +180,7 @@ define(["underscore", "async", "backbone", "q"],
 
             startPingCycle: function (cycleUniqueId, cycleTimeInMilliseconds) {
                 this.pingMonitoring.set("cycleUniqueId", cycleUniqueId);
-                this.pingMonitoring.startMonitoring(4 * cycleTimeInMilliseconds);
+                this.pingMonitoring.startMonitoring(2 * cycleTimeInMilliseconds);
             },
 
             stopPreviousPingCycle: function () {
@@ -204,11 +204,9 @@ define(["underscore", "async", "backbone", "q"],
 
             onStatusChanged: function () {
                 if (this.isStopped()) {
-
                     this.set('king', null);
                 } else {
                     this.findTheKing(this.allNodes());
-                    // this.startPingTheKingPeriodically(this.get("king"));
                 }
             },
 
