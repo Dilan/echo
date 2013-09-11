@@ -1,20 +1,23 @@
-body{
-    font-family: Tahoma;
-}
-.container {
-    height: 400px;
-}
+.stopped { border: 2px solid #b03911;}
 
-.node {
-    background-color: #aaaaaa;
-    border: 1px solid #efefef;
-    margin-bottom: 2px;
-}
+#root-container > div { padding: 20px;}
 
-.king {
-    background-color: #a6b779;
-}
+.nodes { padding: 20px 0 0;}
+.panel-heading { overflow: hidden;}
+.panel-heading .glyphicon { float: right;}
 
-.stopped {
-    border: 2px solid #b03911;
+.income-messages { height: 80px; margin: 0 0 15px; overflow: auto;}
+
+.node .income-messages {}
+.node .node-buttons {}
+
+@media (min-width: 1200px) {
+    .container {
+        max-width: 750px;
+    }
+}
+@media (min-width: 992px) {
+    .container {
+        max-width: 750px;
+    }
 }

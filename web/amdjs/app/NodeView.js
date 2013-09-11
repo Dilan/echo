@@ -12,7 +12,7 @@ define(
 
         return backbone.View.extend({
 
-            className: "node",
+            className: "node panel panel-default",
 
             initialize: function () {
                 if (this.model) {
@@ -31,18 +31,20 @@ define(
             },
 
             onKingChanged: function () {
-                if (this.model.isKing()) {
-                    this.$el.addClass('king');
+                if(this.model.isKing()) {
+                    this.$el.addClass('king panel-primary');
+                    this.$el.find(".panel-heading").prepend('<span class="glyphicon glyphicon-tower"></span>');
                 } else {
-                    this.$el.removeClass('king');
+                    this.$el.removeClass('king panel-primary');
+                    this.$el.find(".glyphicon").remove();
                 }
             },
 
             onStatusChanged: function () {
                 if (this.model.isStopped()) {
-                    this.$el.addClass("stopped");
+                    this.$el.addClass("panel-danger");
                 } else {
-                    this.$el.removeClass("stopped");
+                    this.$el.removeClass("panel-danger");
                 }
             },
 

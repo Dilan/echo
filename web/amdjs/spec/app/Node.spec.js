@@ -51,15 +51,13 @@ define(["underscore", "backbone", "app/Node"], function (_, backbone, Node) {
         });
 
         describe("app/Node callback on PING", function () {
-            var node = new Node(
-                    { id: 1001 },
-                    {
-                        _: { defer: function() { } },
-                        pingMonitoring: new backbone.Model()
-                    }
-                ),
+            var node1 =new backbone.Model(),
+                node2 =new backbone.Model(),
+                node3 =new backbone.Model(),
+
+                nodeCollection = new backbone.Collection([node1,node2,node3]),
                 king = new Node(
-                    { id: 2002 },
+                    { id: 1001 },
                     {
                         _: { defer: function() { } },
                         pingMonitoring: new backbone.Model()
@@ -67,11 +65,8 @@ define(["underscore", "backbone", "app/Node"], function (_, backbone, Node) {
                 );
 
             it("supply 1st argument = NULL and 2nd = NOW() when Node is running", function () {
-
-
-
                 spyOn(node1, "trigger");
-                node.trigger()proclaimTheKing(king, nodeCollection);
+                king.proclaimTheKing(king, nodeCollection);
                 expect(node1.trigger.argsForCall[0]).toEqual(["IMTHEKING", king]);
             });
         });

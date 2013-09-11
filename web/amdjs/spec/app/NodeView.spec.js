@@ -16,11 +16,11 @@ define(["backbone", "app/NodeView"], function (backbone, NodeView) {
                 view = new NodeView({model: model});
 
             it("displays button to stop", function () {
-                expect(view.render().$("a[class='stop']").size()).toBe(1);
+                expect(view.render().$("a[class='stop btn btn-primary']").size()).toBe(1);
             });
 
             it("displays button to recover", function () {
-                expect(view.render().$("a[class='recover']").size()).toBe(1);
+                expect(view.render().$("a[class='recover btn btn-primary']").size()).toBe(1);
             });
         });
     };

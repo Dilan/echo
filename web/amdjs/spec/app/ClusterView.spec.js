@@ -16,7 +16,7 @@ define(["backbone", "app/ClusterView"], function (backbone, ClusterView) {
                 view = new ClusterView({model: model});
 
             it("displays [add] link", function () {
-                expect(view.render().$("a[class='add']").size()).toBe(1);
+                expect(view.render().$("a[class='add btn btn-primary']").size()).toBe(1);
             });
         });
     };
